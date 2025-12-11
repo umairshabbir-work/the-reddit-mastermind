@@ -1,54 +1,53 @@
 export interface Comment {
-	_id?: string;
-	authenticityScore: number;
-	parentCommentId?: string;
-	personaUsername: string;
-	postId: string;
+	id: number;
+	parentCommentId?: number;
+	personaId: number;
+	postId: number;
 	text: string;
+	timestamp: Date;
 }
 
 export interface Company {
-	_id?: string;
-	createdAt: Date;
 	description: string;
-	keywords: string[];
+	id: number;
+	keywords: keyword[];
 	name: string;
-	personaIds: string[];
 	postsPerWeek: number;
-	subredditIds: string[];
-	updatedAt: Date;
+	subreddits: Subreddit[];
 	website: string;
 }
 
 export interface ContentCalendar {
-	_id?: string;
-	companyId: string;
-	generatedAt: Date;
+	companyId: number;
+	id: number;
 	posts: Post[];
+	timestamp: Date;
 	weekStartDate: Date;
 }
 
+export interface keyword {
+	id: number;
+	text: string;
+}
+
 export interface Persona {
-	_id?: string;
-	background: string;
-	bio: string;
+	id: number;
+	info: string;
 	username: string;
 }
 
 export interface Post {
-	_id?: string;
-	authenticityScore: number;
 	body: string;
 	comments: Comment[];
-	companyId: string;
-	personaUsername: string;
-	scheduledDate: Date;
-	subredditId: string;
+	id: number;
+	keywordIds: number[];
+	personaId: number;
+	subredditId: number;
+	timestamp: Date;
 	title: string;
 }
 
 export interface Subreddit {
-	_id?: string;
-	maxPostsPerWeek: number;
+	id: number;
 	name: string;
 }

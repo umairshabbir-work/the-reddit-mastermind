@@ -1,12 +1,12 @@
 import "./globals.css";
 import {
-	DM_Sans as V0_Font_DM_Sans,
-	Source_Serif_4 as V0_Font_Source_Serif_4,
-	Space_Mono as V0_Font_Space_Mono,
+	DM_Sans as Font_DM_Sans,
+	Source_Serif_4 as Font_Source_Serif_4,
+	Space_Mono as Font_Space_Mono,
 } from "next/font/google";
 import type { Metadata } from "next";
 
-const _dmSans = V0_Font_DM_Sans({
+const _dmSans = Font_DM_Sans({
 	subsets: ["latin"],
 	weight: [
 		"100",
@@ -21,11 +21,11 @@ const _dmSans = V0_Font_DM_Sans({
 		"900",
 	],
 });
-const _sourceSerif_4 = V0_Font_Source_Serif_4({
+const _sourceSerif_4 = Font_Source_Serif_4({
 	subsets: ["latin"],
 	weight: ["200", "300", "400", "500", "600", "700", "800", "900"],
 });
-const _spaceMono = V0_Font_Space_Mono({
+const _spaceMono = Font_Space_Mono({
 	subsets: ["latin"],
 	weight: ["400", "700"],
 });

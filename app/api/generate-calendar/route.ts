@@ -1,74 +1,53 @@
 import { generateContent } from "@/lib/blackbox-client";
-import { getDb } from "@/lib/mongodb";
-import { ObjectId } from "mongodb";
-import type { Post } from "@/lib/types";
+import { generateId } from "@/lib/utils";
+import type { Company, ContentCalendar, Persona, Post } from "@/lib/types";
 
-export async function POST(req: Request) {
+export const POST = async (req: Request) => {
+	const { company, personas, weekStartDateISO } = (await req.json()) as {
+		company: Company;
+		personas: Persona[];
+		weekStartDateISO: string;
+	};
+	if (!company || !personas)
+		return Response.json(
+			{ error: "Missing required data: company, personas." },
+			{ status: 400 },
+		);
+	if (!company.keywords || company.keywords.length === 0)
+		return Response.json(
+			{ error: "At least one keyword is required." },
+			{ status: 400 },
+		);
+	if (personas.length === 0)
+		return Response.json(
+			{ error: "At least one persona is required." },
+			{ status: 400 },
+		);
+
 	try {
-		const { companyId, weekStartDate } = await req.json();
-		const db = await getDb();
-
-		const company = await db
-			.collection("companies")
-			.findOne({ _id: new ObjectId(companyId) });
-		if (!company)
-			return Response.json(
-				{ error: "Company not found." },
-				{ status: 404 },
-			);
-
-		const personas = await db
-			.collection("personas")
-			.find({
-				_id: {
-					$in: company.personaIds.map(
-						(id: string) => new ObjectId(id),
-					),
-				},
-			})
-			.toArray();
-
-		const subreddits = await db
-			.collection("subreddits")
-			.find({
-				_id: {
-					$in: company.subredditIds.map(
-						(id: string) => new ObjectId(id),
-					),
-				},
-			})
-			.toArray();
-
 		const posts: Post[] = [];
 		const postsPerWeek = company.postsPerWeek || 3;
 
 		for (let i = 0; i < postsPerWeek; i++) {
+			const keyword = company.keywords[i % company.keywords.length];
 			const persona = personas[i % personas.length];
-			const subreddit = subreddits[i % subreddits.length];
+			const subreddit = company.subreddits[i % company.subreddits.length];
 
 			const prompt = `You are a Reddit user named ${
 				persona.username
-			} with this background: "${persona.background}". 
-      
-      Create an authentic Reddit post for r/${
-			subreddit.name
-		} that naturally discusses ${
-				company.keywords[i % company.keywords.length]
-			}.
-      
-      Format your response as JSON with this structure:
-      {
-        "title": "post title",
-        "body": "post content",
-        "comments": [
-          {"username": "persona1", "text": "comment text"},
-          {"username": "persona2", "text": "reply text"}
-        ]
-      }
-      
-      Make it authentic, not promotional. Add 3-4 comments from different personas responding naturally.`;
+			} with this background: "${persona.info}".
+			
+			Create an authentic Reddit post for ${
+				subreddit.name
+			} that naturally discusses ${keyword.text}.
 
-			const generated = await generateContent("", prompt);
+			Format your response as JSON with this structure:
+
+			{ body: "post content", title: "post title" }
+			
+			Make it authentic, not promotional.`;
+
+			const generated = await generateContent("gpt-4o-mini", prompt);
 
 			let parsedContent;
 			try {
@@ -76,54 +55,38 @@ export async function POST(req: Request) {
 			} catch {
 				parsedContent = {
 					body: generated,
-					comments: [],
-					title: `Interesting discussion about ${
-						company.keywords[i % company.keywords.length]
-					}`,
+					title: `Interesting discussion about ${keyword.text}`,
 				};
 			}
 
 			const post: Post = {
-				authenticityScore: Math.floor(Math.random() * 3) + 7,
 				body: parsedContent.body,
-				comments:
-					parsedContent.comments?.map((c: any, idx: number) => ({
-						personaUsername:
-							c.username ||
-							personas[idx % personas.length].username,
-						text: c.text,
-						authenticityScore: Math.floor(Math.random() * 3) + 7,
-					})) || [],
-				companyId,
-				personaUsername: persona.username,
-				scheduledDate: new Date(
-					new Date(weekStartDate).getTime() + i * 24 * 60 * 60 * 1000,
+				comments: [],
+				id: generateId(),
+				keywordIds: [keyword.id],
+				personaId: persona.id,
+				subredditId: subreddit.id,
+				timestamp: new Date(
+					new Date(weekStartDateISO).getTime() +
+						i * 24 * 60 * 60 * 1000,
 				),
-				subredditId: subreddit._id.toString(),
 				title: parsedContent.title,
 			};
 
 			posts.push(post);
 		}
 
-		const calendar = await db.collection("calendars").insertOne({
-			companyId,
-			generatedAt: new Date(),
-			posts,
-			weekStartDate: new Date(weekStartDate),
-		});
-
 		return Response.json({
-			_id: calendar.insertedId,
-			companyId,
-			generatedAt: new Date(),
+			companyId: company.id,
+			id: generateId(),
 			posts,
-			weekStartDate,
-		});
+			timestamp: new Date(),
+			weekStartDate: new Date(weekStartDateISO),
+		} as ContentCalendar);
 	} catch (error) {
 		return Response.json(
 			{ error: "Failed to generate calendar." },
 			{ status: 500 },
 		);
 	}
-}
+};

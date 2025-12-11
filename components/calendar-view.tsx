@@ -8,6 +8,7 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { getPersonaById, getSubredditById } from "@/lib/utils";
 import type { Post } from "@/lib/types";
 
 interface CalendarViewProps {
@@ -16,18 +17,16 @@ interface CalendarViewProps {
 	posts: Post[];
 }
 
-export function CalendarView({
+export const CalendarView = ({
 	isLoading,
 	onGenerate,
 	posts,
-}: CalendarViewProps) {
-	const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
+}: CalendarViewProps) => {
 	return (
-		<div className="w-full max-w-6xl mx-auto p-8 space-y-8">
-			<Card className="border-4 border-black rounded-none">
+		<div className="mx-auto w-full max-w-6xl space-y-8 p-8">
+			<Card className="rounded-none border-4 border-black">
 				<CardHeader>
-					<div className="flex justify-between items-start">
+					<div className="flex items-start justify-between">
 						<div>
 							<CardTitle className="font-mono text-2xl">
 								Content Calendar
@@ -39,7 +38,7 @@ export function CalendarView({
 						</div>
 
 						<Button
-							className="bg-secondary text-secondary-foreground border-2 border-black rounded-none font-mono font-bold hover:bg-opacity-80"
+							className="bg-secondary text-secondary-foreground hover:bg-opacity-80 rounded-none border-2 border-black font-mono font-bold"
 							disabled={isLoading}
 							onClick={onGenerate}
 						>
@@ -58,31 +57,36 @@ export function CalendarView({
 									No content generated yet
 								</p>
 
-								<p className="font-mono text-sm text-muted-foreground">
+								<p className="text-muted-foreground font-mono text-sm">
 									Click Generate Calendar to create posts
 								</p>
 							</div>
 						) : (
-							posts.map((post, idx) => (
+							posts.map((post, i) => (
 								<div
-									className="border-4 border-black p-6 space-y-4"
-									key={idx}
+									className="space-y-4 border-4 border-black p-6"
+									key={i}
 								>
-									<div className="flex justify-between items-start">
+									<div className="flex items-start justify-between">
 										<div className="flex-1">
-											<h3 className="font-mono font-bold text-lg">
+											<h3 className="font-mono text-lg font-bold">
 												{post.title}
 											</h3>
 
-											<p className="font-mono text-sm text-muted-foreground">
+											<p className="text-muted-foreground font-mono text-sm">
 												Posted by @
-												{post.personaUsername} in r/
-												{post.subredditId}
+												{
+													getPersonaById(
+														post.personaId,
+													).username
+												}{" "}
+												in r/
+												{
+													getSubredditById(
+														post.subredditId,
+													).name
+												}
 											</p>
-										</div>
-
-										<div className="bg-primary text-primary-foreground px-3 py-1 border-2 border-black font-mono font-bold">
-											{post.authenticityScore}/10
 										</div>
 									</div>
 
@@ -92,21 +96,23 @@ export function CalendarView({
 
 									{post.comments &&
 										post.comments.length > 0 && (
-											<div className="border-2 border-black p-4 space-y-3 bg-muted">
-												<p className="font-mono font-bold text-sm">
+											<div className="bg-muted space-y-3 border-2 border-black p-4">
+												<p className="font-mono text-sm font-bold">
 													Comments:
 												</p>
 
 												{post.comments.map(
 													(comment, cidx) => (
 														<div
-															className="border-l-4 border-primary pl-3 space-y-1"
+															className="border-primary space-y-1 border-l-4 pl-3"
 															key={cidx}
 														>
-															<p className="font-mono font-bold text-sm">
+															<p className="font-mono text-sm font-bold">
 																@
 																{
-																	comment.personaUsername
+																	getPersonaById(
+																		comment.personaId,
+																	).username
 																}
 															</p>
 
@@ -119,10 +125,10 @@ export function CalendarView({
 											</div>
 										)}
 
-									<div className="font-mono text-xs text-muted-foreground pt-2">
+									<div className="text-muted-foreground pt-2 font-mono text-xs">
 										Scheduled:{" "}
 										{new Date(
-											post.scheduledDate,
+											post.timestamp,
 										).toLocaleDateString()}
 									</div>
 								</div>
@@ -133,4 +139,4 @@ export function CalendarView({
 			</Card>
 		</div>
 	);
-}
+};
