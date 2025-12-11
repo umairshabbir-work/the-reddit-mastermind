@@ -66,22 +66,8 @@ export const SettingsDashboard = () => {
 	}, []);
 
 	useEffect(() => {
-		if (companyDetail.id) setCompany(companyDetail);
-		else
-			setCompany({
-				description: "",
-				id: generateId(),
-				keywords: [],
-				name: "",
-				postsPerWeek: 3,
-				subreddits: [],
-				website: "",
-			});
-	}, [companyDetail]);
-
-	useEffect(() => {
 		if (personasDetail.length > 0) setPersonas(personasDetail);
-	}, [personasDetail]);
+	}, [personasDetail.length]);
 
 	return (
 		<div className="mx-auto w-full max-w-6xl space-y-8 p-8">
@@ -250,6 +236,13 @@ export const SettingsDashboard = () => {
 									value={companyDetail.postsPerWeek || 3}
 								/>
 							</div>
+
+							<Button
+								className="bg-primary text-primary-foreground hover:bg-opacity-80 h-12 w-full rounded-none border-2 border-black font-mono text-lg font-bold"
+								onClick={() => setCompany(companyDetail)}
+							>
+								Save Company
+							</Button>
 						</CardContent>
 					</Card>
 				</TabsContent>
