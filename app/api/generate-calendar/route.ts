@@ -73,7 +73,7 @@ export const POST = async (req: Request) => {
 				subredditId: subreddit.id,
 				timestamp: new Date(
 					new Date(weekStartDateISO).getTime() +
-						i * Math.floor(Math.random() * 12) * 60 * 60 * 1000,
+						i * Math.floor(Math.random() * 24) * 60 * 60 * 1000,
 				),
 				title: parsedContent.title,
 			};
@@ -134,7 +134,7 @@ export const POST = async (req: Request) => {
 			const parentComment =
 				post.comments[Math.floor(Math.random() * post.comments.length)];
 			const availablePersonas = personas.filter(
-				(p) => p.id !== post.personaId,
+				(p) => p.id !== parentComment.personaId,
 			);
 			if (availablePersonas.length === 0) continue;
 
@@ -162,7 +162,7 @@ export const POST = async (req: Request) => {
 				text: parsedContent.text,
 				timestamp: new Date(
 					new Date(parentComment.timestamp).getTime() +
-						i * Math.floor(Math.random() * 12) * 60 * 60 * 1000,
+						i * Math.floor(Math.random() * 6) * 60 * 60 * 1000,
 				),
 			};
 
