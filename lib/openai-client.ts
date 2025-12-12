@@ -14,5 +14,5 @@ export const openAI = async (prompt: string) => {
 		model: model,
 	});
 
-	return removeMarkdown(response.text as string);
+	return removeMarkdown(response.output_text as string);
 };

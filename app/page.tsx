@@ -1,10 +1,15 @@
 "use client";
 
 import { CalendarView } from "@/components/calendar-view";
-import { getCompany, getPersonas, setContentCalendar } from "@/lib/utils";
+import {
+	getCompany,
+	getPersonas,
+	getPosts,
+	setContentCalendar,
+} from "@/lib/utils";
 import { SettingsDashboard } from "@/components/settings-dashboard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ContentCalendar, Post } from "@/lib/types";
 
 const Home = () => {
@@ -64,6 +69,11 @@ const Home = () => {
 		}
 	};
 
+	useEffect(() => {
+		const posts = getPosts();
+		if (posts.length > 0) setPosts(posts);
+	}, []);
+
 	return (
 		<main className="bg-background min-h-screen">
 			<Tabs className="w-full" defaultValue="profile">
@@ -95,7 +105,11 @@ const Home = () => {
 					<CalendarView
 						isLoading={isLoading}
 						onGenerate={handleGenerateCalendar}
-						posts={posts}
+						posts={posts.sort(
+							(a, b) =>
+								new Date(a.timestamp).getTime() -
+								new Date(b.timestamp).getTime(),
+						)}
 					/>
 				</TabsContent>
 			</Tabs>

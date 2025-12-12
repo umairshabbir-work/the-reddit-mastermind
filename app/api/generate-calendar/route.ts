@@ -45,9 +45,9 @@ export const POST = async (req: Request) => {
 					Math.floor(Math.random() * company.subreddits.length)
 				];
 
-			const prompt = `You are a Reddit user named ${persona.username} with this background: "${persona.info}". You are working for the company "${company.name}" and this is the company description: "${company.description.trim()}". Create an authentic Reddit post for the subreddit "${subreddit.name}" that naturally discusses the relevant keywords from: "${JSON.stringify(keywords)}". Format your response as JSON with this structure and do not use markdown: "{ body: "body goes here", keywordIds: [keyword ids being used in the body from the keywords array], title: "title goes here" }". Make it authentic, concise, not promotional and do not use em dashes or any other formatting.`;
+			const prompt = `You are a Reddit user "${persona.username}" (${persona.info}). You are working for "${company.name}" (${company.description.trim()}). Create an authentic Reddit post for the subreddit "${subreddit.name}" that naturally discusses some of the keywords from: "${JSON.stringify(keywords)}". Format your response as JSON with this structure and do not use markdown: "{ "body": "...", "keywordIds": [...], "title": "..." }". Make it authentic, max 5-7 sentences, concise, not promotional and do not use em dashes or any other formatting.`;
 
-			const genAiContent = await genAI(prompt);
+			const genAiContent = await openAI(prompt);
 
 			let parsedContent: {
 				body: string;
@@ -60,7 +60,7 @@ export const POST = async (req: Request) => {
 				parsedContent = {
 					body: genAiContent,
 					keywordIds: [],
-					title: "Interesting discussion about ...",
+					title: "...",
 				};
 			}
 
@@ -73,7 +73,7 @@ export const POST = async (req: Request) => {
 				subredditId: subreddit.id,
 				timestamp: new Date(
 					new Date(weekStartDateISO).getTime() +
-						i * 24 * 60 * 60 * 1000,
+						i * Math.floor(Math.random() * 12) * 60 * 60 * 1000,
 				),
 				title: parsedContent.title,
 			};
@@ -81,36 +81,92 @@ export const POST = async (req: Request) => {
 			posts.push(post);
 		}
 
-		for (const post of posts) {
-			for (let i = 0; i < postsPerWeek; i++) {
-				const persona = personas.filter((p) => p.id !== post.personaId)[
-					Math.floor(Math.random() * personas.length - 1)
+		const parentComments = Math.ceil(postsPerWeek * 0.6);
+		const threadComments = postsPerWeek - parentComments;
+
+		for (let i = 0; i < parentComments; i++) {
+			const post = posts[Math.floor(Math.random() * posts.length)];
+			const availablePersonas = personas.filter(
+				(p) => p.id !== post.personaId,
+			);
+			if (availablePersonas.length === 0) continue;
+
+			const persona =
+				availablePersonas[
+					Math.floor(Math.random() * availablePersonas.length)
 				];
 
-				const prompt = `You are a Reddit user named ${persona.username} with this background: "${persona.info}". You are working for the company "${company.name}" and this is the company description: "${company.description.trim()}". Create an authentic Reddit comment for the post "${post.body}". Format your response as JSON with this structure and do not use markdown: "{ text: "comment goes here" }". Make it authentic, 2-3 sentences, concise, not promotional and do not use em dashes or any other formatting.`;
+			const prompt = `You are a Reddit user "${persona.username}" (${persona.info}). You are working for "${company.name}" (${company.description.trim()}). Create an authentic Reddit comment for the post "${post.body}". Format your response as JSON with this structure and do not use markdown: "{ "text": "..." }". Make it authentic, max 2-3 sentences, concise, not promotional and do not use em dashes or any other formatting.`;
 
-				const genAiContent = await genAI(prompt);
+			const genAiContent = await openAI(prompt);
 
-				let parsedContent: { text: string };
-				try {
-					parsedContent = JSON.parse(genAiContent);
-				} catch {
-					parsedContent = { text: genAiContent };
-				}
-
-				const comment: Comment = {
-					id: generateId(),
-					personaId: persona.id,
-					postId: post.id,
-					text: parsedContent.text,
-					timestamp: new Date(
-						new Date(weekStartDateISO).getTime() +
-							i * 24 * 60 * 60 * 1000,
-					),
-				};
-
-				posts.find((p) => p.id === post.id)?.comments.push(comment);
+			let parsedContent: { text: string };
+			try {
+				parsedContent = JSON.parse(genAiContent);
+			} catch {
+				parsedContent = { text: genAiContent };
 			}
+
+			const comment: Comment = {
+				id: generateId(),
+				personaId: persona.id,
+				postId: post.id,
+				text: parsedContent.text,
+				timestamp: new Date(
+					new Date(post.timestamp).getTime() +
+						i * Math.floor(Math.random() * 12) * 60 * 60 * 1000,
+				),
+			};
+
+			posts.find((p) => p.id === post.id)?.comments.push(comment);
+		}
+
+		for (let i = 0; i < threadComments; i++) {
+			const postsWithComments = posts.filter(
+				(p) => p.comments.length > 0,
+			);
+			if (postsWithComments.length === 0) break;
+
+			const post =
+				postsWithComments[
+					Math.floor(Math.random() * postsWithComments.length)
+				];
+			const parentComment =
+				post.comments[Math.floor(Math.random() * post.comments.length)];
+			const availablePersonas = personas.filter(
+				(p) => p.id !== post.personaId,
+			);
+			if (availablePersonas.length === 0) continue;
+
+			const persona =
+				availablePersonas[
+					Math.floor(Math.random() * availablePersonas.length)
+				];
+
+			const prompt = `You are a Reddit user "${persona.username}" (${persona.info}). You are working for "${company.name}" (${company.description.trim()}). Create an authentic Reddit reply comment to this comment: "${parentComment.text}". Format your response as JSON with this structure and do not use markdown: "{ "text": "..." }". Make it authentic, max 1 sentence, concise, not promotional and do not use em dashes or any other formatting.`;
+
+			const genAiContent = await openAI(prompt);
+
+			let parsedContent: { text: string };
+			try {
+				parsedContent = JSON.parse(genAiContent);
+			} catch {
+				parsedContent = { text: genAiContent };
+			}
+
+			const comment: Comment = {
+				id: generateId(),
+				parentCommentId: parentComment.id,
+				personaId: persona.id,
+				postId: post.id,
+				text: parsedContent.text,
+				timestamp: new Date(
+					new Date(parentComment.timestamp).getTime() +
+						i * Math.floor(Math.random() * 12) * 60 * 60 * 1000,
+				),
+			};
+
+			posts.find((p) => p.id === post.id)?.comments.push(comment);
 		}
 
 		return Response.json({

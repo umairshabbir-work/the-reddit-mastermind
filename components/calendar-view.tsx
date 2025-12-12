@@ -8,8 +8,8 @@ import {
 	CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { getPersonaById, getSubredditById } from "@/lib/utils";
-import type { Post } from "@/lib/types";
+import { getKeywordById, getPersonaById, getSubredditById } from "@/lib/utils";
+import type { Comment, Post } from "@/lib/types";
 
 interface CalendarViewProps {
 	isLoading: boolean;
@@ -22,6 +22,24 @@ export const CalendarView = ({
 	onGenerate,
 	posts,
 }: CalendarViewProps) => {
+	const getParentComments = (post: Post) =>
+		post.comments
+			.filter((c) => !c.parentCommentId)
+			.sort(
+				(a, b) =>
+					new Date(a.timestamp).getTime() -
+					new Date(b.timestamp).getTime(),
+			) || ([] as Comment[]);
+
+	const getThreadComments = (parentCommentId: number, post: Post) =>
+		post.comments
+			.filter((c) => c.parentCommentId === parentCommentId)
+			.sort(
+				(a, b) =>
+					new Date(a.timestamp).getTime() -
+					new Date(b.timestamp).getTime(),
+			) || ([] as Comment[]);
+
 	return (
 		<div className="mx-auto w-full max-w-6xl space-y-8 p-8">
 			<Card className="rounded-none border-4 border-black">
@@ -62,10 +80,10 @@ export const CalendarView = ({
 								</p>
 							</div>
 						) : (
-							posts.map((post, i) => (
+							posts.map((post) => (
 								<div
 									className="space-y-4 border-4 border-black p-6"
-									key={i}
+									key={post.id}
 								>
 									<div className="flex items-start justify-between">
 										<div className="flex-1">
@@ -74,19 +92,48 @@ export const CalendarView = ({
 											</h3>
 
 											<p className="text-muted-foreground font-mono text-sm">
-												Posted by @
+												To be posted by @
 												{
 													getPersonaById(
 														post.personaId,
 													).username
 												}{" "}
-												in r/
+												in{" "}
 												{
 													getSubredditById(
 														post.subredditId,
 													).name
 												}
 											</p>
+
+											{post.keywordIds &&
+												post.keywordIds.length > 0 && (
+													<div className="mt-2 flex flex-wrap gap-2">
+														{post.keywordIds.map(
+															(kw) => {
+																const keyword =
+																	getKeywordById(
+																		kw,
+																	);
+
+																return (
+																	keyword.text && (
+																		<span
+																			className="bg-secondary text-secondary-foreground border-2 border-black px-2 py-1 font-mono text-xs font-bold"
+																			key={
+																				keyword.id
+																			}
+																		>
+																			{
+																				keyword.text
+																			}
+																		</span>
+																	)
+																);
+															},
+														)}
+													</div>
+												)}
 										</div>
 									</div>
 
@@ -97,39 +144,91 @@ export const CalendarView = ({
 									{post.comments &&
 										post.comments.length > 0 && (
 											<div className="bg-muted space-y-3 border-2 border-black p-4">
-												<p className="font-mono text-sm font-bold">
-													Comments:
-												</p>
+												{getParentComments(post).map(
+													(c) => {
+														const threadComments =
+															getThreadComments(
+																c.id,
+																post,
+															);
 
-												{post.comments.map(
-													(comment, cidx) => (
-														<div
-															className="border-primary space-y-1 border-l-4 pl-3"
-															key={cidx}
-														>
-															<p className="font-mono text-sm font-bold">
-																@
-																{
-																	getPersonaById(
-																		comment.personaId,
-																	).username
-																}
-															</p>
+														return (
+															<div
+																className="border-primary space-y-2 border-l-4 pl-3"
+																key={c.id}
+															>
+																<div className="space-y-1">
+																	<p className="font-mono text-sm font-bold">
+																		@
+																		{
+																			getPersonaById(
+																				c.personaId,
+																			)
+																				.username
+																		}
+																	</p>
 
-															<p className="font-mono text-sm">
-																{comment.text}
-															</p>
-														</div>
-													),
+																	<p className="font-mono text-sm">
+																		{c.text}
+																	</p>
+
+																	<p className="text-muted-foreground font-mono text-xs">
+																		{new Date(
+																			c.timestamp,
+																		).toLocaleString()}
+																	</p>
+																</div>
+
+																{threadComments.length >
+																	0 && (
+																	<div className="ml-4 space-y-2 border-l-2 border-gray-400 pl-3">
+																		{threadComments.map(
+																			(
+																				reply,
+																			) => (
+																				<div
+																					className="space-y-1"
+																					key={
+																						reply.id
+																					}
+																				>
+																					<p className="text-muted-foreground font-mono text-xs font-bold">
+																						@
+																						{
+																							getPersonaById(
+																								reply.personaId,
+																							)
+																								.username
+																						}
+																					</p>
+
+																					<p className="font-mono text-xs">
+																						{
+																							reply.text
+																						}
+																					</p>
+
+																					<p className="text-muted-foreground font-mono text-xs">
+																						{new Date(
+																							reply.timestamp,
+																						).toLocaleString()}
+																					</p>
+																				</div>
+																			),
+																		)}
+																	</div>
+																)}
+															</div>
+														);
+													},
 												)}
 											</div>
 										)}
 
 									<div className="text-muted-foreground pt-2 font-mono text-xs">
-										Scheduled:{" "}
 										{new Date(
 											post.timestamp,
-										).toLocaleDateString()}
+										).toLocaleString()}
 									</div>
 								</div>
 							))
