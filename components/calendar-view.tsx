@@ -57,12 +57,14 @@ export const CalendarView = ({
 
 						<Button
 							className="bg-secondary text-secondary-foreground hover:bg-opacity-80 rounded-none border-2 border-black font-mono font-bold"
-							disabled={isLoading}
+							disabled={isLoading || posts.length > 0}
 							onClick={onGenerate}
 						>
 							{isLoading
 								? "Generating..."
-								: "⚡ Generate Calendar"}
+								: posts.length > 0
+									? "✔️ Calendar Generated"
+									: "⚡ Generate Calendar"}
 						</Button>
 					</div>
 				</CardHeader>
