@@ -84,3 +84,7 @@ export const getSubredditById = (id: number) => {
 };
 
 export const generateId = () => crypto.getRandomValues(new Uint32Array(1))[0];
+export const getDaysOffset = () => Math.floor(Math.random() * 7);
+export const getHoursOffset = () => Math.floor(Math.random() * 24);
+export const getMinutesOffset = () => Math.floor(Math.random() * 60);
+export const getSecondsOffset = () => Math.floor(Math.random() * 60);

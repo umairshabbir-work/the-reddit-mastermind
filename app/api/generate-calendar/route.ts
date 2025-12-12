@@ -1,5 +1,11 @@
 import { genAI } from "@/lib/google-client";
-import { generateId } from "@/lib/utils";
+import {
+	generateId,
+	getDaysOffset,
+	getHoursOffset,
+	getMinutesOffset,
+	getSecondsOffset,
+} from "@/lib/utils";
 import { openAI } from "@/lib/openai-client";
 import type {
 	Comment,
@@ -73,7 +79,10 @@ export const POST = async (req: Request) => {
 				subredditId: subreddit.id,
 				timestamp: new Date(
 					new Date(weekStartDateISO).getTime() +
-						i * Math.floor(Math.random() * 24) * 60 * 60 * 1000,
+						getDaysOffset() * 24 * 60 * 60 * 1000 +
+						getHoursOffset() * 60 * 60 * 1000 +
+						getMinutesOffset() * 60 * 1000 +
+						getSecondsOffset() * 1000,
 				),
 				title: parsedContent.title,
 			};
@@ -114,7 +123,9 @@ export const POST = async (req: Request) => {
 				text: parsedContent.text,
 				timestamp: new Date(
 					new Date(post.timestamp).getTime() +
-						i * Math.floor(Math.random() * 12) * 60 * 60 * 1000,
+						getHoursOffset() * 60 * 60 * 1000 +
+						getMinutesOffset() * 60 * 1000 +
+						getSecondsOffset() * 1000,
 				),
 			};
 
@@ -162,7 +173,9 @@ export const POST = async (req: Request) => {
 				text: parsedContent.text,
 				timestamp: new Date(
 					new Date(parentComment.timestamp).getTime() +
-						i * Math.floor(Math.random() * 6) * 60 * 60 * 1000,
+						getHoursOffset() * 60 * 60 * 1000 +
+						getMinutesOffset() * 60 * 1000 +
+						getSecondsOffset() * 1000,
 				),
 			};
 

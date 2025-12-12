@@ -39,9 +39,8 @@ const Home = () => {
 			}
 
 			const weekStartDate = new Date();
-			weekStartDate.setDate(
-				weekStartDate.getDate() - weekStartDate.getDay() + 1,
-			);
+			weekStartDate.setDate(weekStartDate.getDate() + 1);
+			weekStartDate.setHours(0, 0, 0, 0);
 
 			const response = await fetch("/api/generate-calendar", {
 				body: JSON.stringify({
